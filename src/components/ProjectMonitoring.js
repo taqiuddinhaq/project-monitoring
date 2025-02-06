@@ -1,56 +1,144 @@
 'use client';
-import React, { useState } from 'react';
-import { CalendarDays, Users, BarChart, AlertCircle, CheckCircle, Clock, Activity, UserCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { CalendarDays, Users, BarChart, AlertCircle, CheckCircle, Clock, Activity, UserCircle, Plus, Edit2, Trash2, X } from 'lucide-react';
 
 const ProjectMonitoring = () => {
-  const [projects] = useState([
-    {
-      id: 1,
-      name: "Masterplan Kawasan A",
-      manager: {
-        name: "Pak Rudi",
-        title: "Senior Project Manager",
-        contact: "0812-3456-7890"
-      },
-      team: [
-        { name: "Ahmad", role: "Urban Planner" },
-        { name: "Budi", role: "Environmental Analyst" },
-        { name: "Clara", role: "Infrastructure Specialist" }
-      ],
-      deadline: "2025-03-01",
-      progress: 65,
-      status: "On Track",
-      tasks: [
-        { task: "Survey Lapangan", status: "Selesai", pic: "Ahmad" },
-        { task: "Analisis Data", status: "In Progress", pic: "Budi" },
-        { task: "Penyusunan Konsep", status: "In Progress", pic: "Clara" }
-      ]
+  const [projects, setProjects] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    manager: {
+      name: '',
+      title: '',
+      contact: ''
     },
-    {
-      id: 2,
-      name: "DED Gedung B",
-      manager: {
-        name: "Ibu Sarah",
-        title: "Technical Manager",
-        contact: "0812-9876-5432"
-      },
-      team: [
-        { name: "Diana", role: "Architect" },
-        { name: "Erik", role: "Structural Engineer" },
-        { name: "Fani", role: "Quantity Surveyor" }
-      ],
-      deadline: "2025-04-15",
-      progress: 30,
-      status: "Delayed",
-      tasks: [
-        { task: "Gambar Arsitektur", status: "In Progress", pic: "Diana" },
-        { task: "Perhitungan Struktur", status: "Not Started", pic: "Erik" },
-        { task: "RAB", status: "Not Started", pic: "Fani" }
-      ]
-    }
-  ]);
+    team: [{ name: '', role: '' }],
+    deadline: '',
+    progress: 0,
+    status: 'On Track',
+    tasks: [{ task: '', status: 'Not Started', pic: '' }]
+  });
 
-  // Helper functions
+  // Load data from localStorage on component mount
+  useEffect(() => {
+    const savedProjects = localStorage.getItem('projects');
+    if (savedProjects) {
+      setProjects(JSON.parse(savedProjects));
+    } else {
+      // Initial demo data
+      const initialProjects = [
+        {
+          id: 1,
+          name: "Masterplan Kawasan A",
+          manager: {
+            name: "Pak Rudi",
+            title: "Senior Project Manager",
+            contact: "0812-3456-7890"
+          },
+          team: [
+            { name: "Ahmad", role: "Urban Planner" },
+            { name: "Budi", role: "Environmental Analyst" },
+            { name: "Clara", role: "Infrastructure Specialist" }
+          ],
+          deadline: "2025-03-01",
+          progress: 65,
+          status: "On Track",
+          tasks: [
+            { task: "Survey Lapangan", status: "Selesai", pic: "Ahmad" },
+            { task: "Analisis Data", status: "In Progress", pic: "Budi" },
+            { task: "Penyusunan Konsep", status: "In Progress", pic: "Clara" }
+          ]
+        }
+      ];
+      setProjects(initialProjects);
+      localStorage.setItem('projects', JSON.stringify(initialProjects));
+    }
+  }, []);
+
+  // Save to localStorage whenever projects change
+  useEffect(() => {
+    localStorage.setItem('projects', JSON.stringify(projects));
+  }, [projects]);
+  const openModal = (project = null) => {
+    if (project) {
+      setEditingProject(project);
+      setFormData(project);
+    } else {
+      setEditingProject(null);
+      setFormData({
+        name: '',
+        manager: { name: '', title: '', contact: '' },
+        team: [{ name: '', role: '' }],
+        deadline: '',
+        progress: 0,
+        status: 'On Track',
+        tasks: [{ task: '', status: 'Not Started', pic: '' }]
+      });
+    }
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingProject(null);
+    setFormData({
+      name: '',
+      manager: { name: '', title: '', contact: '' },
+      team: [{ name: '', role: '' }],
+      deadline: '',
+      progress: 0,
+      status: 'On Track',
+      tasks: [{ task: '', status: 'Not Started', pic: '' }]
+    });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (editingProject) {
+      setProjects(projects.map(p => 
+        p.id === editingProject.id ? { ...formData, id: p.id } : p
+      ));
+    } else {
+      setProjects([...projects, { ...formData, id: Date.now() }]);
+    }
+    closeModal();
+  };
+
+  const handleDelete = (projectId) => {
+    if (window.confirm('Apakah Anda yakin ingin menghapus proyek ini?')) {
+      setProjects(projects.filter(p => p.id !== projectId));
+    }
+  };
+
+  const addTeamMember = () => {
+    setFormData({
+      ...formData,
+      team: [...formData.team, { name: '', role: '' }]
+    });
+  };
+
+  const removeTeamMember = (index) => {
+    setFormData({
+      ...formData,
+      team: formData.team.filter((_, i) => i !== index)
+    });
+  };
+
+  const addTask = () => {
+    setFormData({
+      ...formData,
+      tasks: [...formData.tasks, { task: '', status: 'Not Started', pic: '' }]
+    });
+  };
+
+  const removeTask = (index) => {
+    setFormData({
+      ...formData,
+      tasks: formData.tasks.filter((_, i) => i !== index)
+    });
+  };
+  // Helper functions untuk UI
   const getStatusColor = (status) => {
     switch(status) {
       case "On Track": return "bg-gradient-to-r from-green-400 to-green-500 text-white";
@@ -78,6 +166,248 @@ const ProjectMonitoring = () => {
     </div>
   );
 
+  // Modal Form Component
+  const ProjectForm = () => (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
+      <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">
+            {editingProject ? 'Edit Proyek' : 'Tambah Proyek Baru'}
+          </h2>
+          <button onClick={closeModal} className="text-gray-500 hover:text-gray-700">
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Project Details */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Nama Proyek</label>
+              <input
+                type="text"
+                required
+                value={formData.name}
+                onChange={e => setFormData({...formData, name: e.target.value})}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              />
+            </div>
+
+            {/* Manager Information */}
+            <div className="space-y-4">
+              <h3 className="font-medium">Project Manager</h3>
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-700">Nama</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.manager.name}
+                    onChange={e => setFormData({
+                      ...formData,
+                      manager: {...formData.manager, name: e.target.value}
+                    })}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-700">Jabatan</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.manager.title}
+                    onChange={e => setFormData({
+                      ...formData,
+                      manager: {...formData.manager, title: e.target.value}
+                    })}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-700">Kontak</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.manager.contact}
+                    onChange={e => setFormData({
+                      ...formData,
+                      manager: {...formData.manager, contact: e.target.value}
+                    })}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Team Members */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="font-medium">Tim Proyek</h3>
+                <button
+                  type="button"
+                  onClick={addTeamMember}
+                  className="text-sm text-blue-500 hover:text-blue-600"
+                >
+                  + Tambah Anggota Tim
+                </button>
+              </div>
+              {formData.team.map((member, index) => (
+                <div key={index} className="flex gap-4 items-start">
+                  <div className="flex-1 space-y-2">
+                    <input
+                      type="text"
+                      placeholder="Nama"
+                      required
+                      value={member.name}
+                      onChange={e => {
+                        const newTeam = [...formData.team];
+                        newTeam[index].name = e.target.value;
+                        setFormData({...formData, team: newTeam});
+                      }}
+                      className="block w-full rounded-md border border-gray-300 px-3 py-2"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Jabatan"
+                      required
+                      value={member.role}
+                      onChange={e => {
+                        const newTeam = [...formData.team];
+                        newTeam[index].role = e.target.value;
+                        setFormData({...formData, team: newTeam});
+                      }}
+                      className="block w-full rounded-md border border-gray-300 px-3 py-2"
+                    />
+                  </div>
+                  {formData.team.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeTeamMember(index)}
+                      className="text-red-500 hover:text-red-600"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            {/* Project Status and Progress */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Status</label>
+                <select
+                  value={formData.status}
+                  onChange={e => setFormData({...formData, status: e.target.value})}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                >
+                  <option value="On Track">On Track</option>
+                  <option value="Delayed">Delayed</option>
+                  <option value="Complete">Complete</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Progress (%)</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  required
+                  value={formData.progress}
+                  onChange={e => setFormData({...formData, progress: Number(e.target.value)})}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Deadline</label>
+                <input
+                  type="date"
+                  required
+                  value={formData.deadline}
+                  onChange={e => setFormData({...formData, deadline: e.target.value})}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                />
+              </div>
+            </div>
+
+            {/* Tasks */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="font-medium">Daftar Pekerjaan</h3>
+                <button
+                  type="button"
+                  onClick={addTask}
+                  className="text-sm text-blue-500 hover:text-blue-600"
+                >
+                  + Tambah Pekerjaan
+                </button>
+              </div>
+              {formData.tasks.map((task, index) => (
+                <div key={index} className="flex gap-4 items-start">
+                  <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <input
+                      type="text"
+                      placeholder="Nama Pekerjaan"
+                      required
+                      value={task.task}
+                      onChange={e => {
+                        const newTasks = [...formData.tasks];
+                        newTasks[index].task = e.target.value;
+                        setFormData({...formData, tasks: newTasks});
+                      }}
+                      className="block w-full rounded-md border border-gray-300 px-3 py-2"
+                    />
+                    <input
+                      type="text"
+                      placeholder="PIC"
+                      required
+                      value={task.pic}
+                      onChange={e => {
+                        const newTasks = [...formData.tasks];
+                        newTasks[index].pic = e.target.value;
+                        setFormData({...formData, tasks: newTasks});
+                      }}
+                      className="block w-full rounded-md border border-gray-300 px-3 py-2"
+                    />
+                    <select
+                      value={task.status}
+                      onChange={e => {
+                        const newTasks = [...formData.tasks];
+                        newTasks[index].status = e.target.value;
+                        setFormData({...formData, tasks: newTasks});
+                      }}
+                      className="block w-full rounded-md border border-gray-300 px-3 py-2"
+                    >
+                      <option value="Not Started">Not Started</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Selesai">Selesai</option>
+                    </select>
+                  </div>
+                  {formData.tasks.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeTask(index)}
+                      className="text-red-500 hover:text-red-600"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+            >
+              {editingProject ? 'Simpan Perubahan' : 'Tambah Proyek'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
       {/* Header */}
@@ -86,9 +416,13 @@ const ProjectMonitoring = () => {
           Project Monitoring Dashboard
         </h1>
         <div className="flex gap-4">
-          <span className="px-3 py-1.5 text-sm rounded-full bg-gradient-to-r from-blue-400 to-blue-500 text-white shadow-sm">
-            Total Proyek: {projects.length}
-          </span>
+          <button
+            onClick={() => openModal()}
+            className="px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 flex items-center gap-2"
+          >
+            <Plus className="h-5 w-5" />
+            Tambah Proyek
+          </button>
         </div>
       </div>
 
@@ -156,9 +490,23 @@ const ProjectMonitoring = () => {
             <div className="p-6 border-b">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-gray-800">{project.name}</h2>
-                <span className={`px-3 py-1.5 text-sm rounded-full ${getStatusColor(project.status)} shadow-sm`}>
-                  {project.status}
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => openModal(project)}
+                    className="p-2 text-blue-500 hover:text-blue-600"
+                  >
+                    <Edit2 className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(project.id)}
+                    className="p-2 text-red-500 hover:text-red-600"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </button>
+                  <span className={`px-3 py-1.5 text-sm rounded-full ${getStatusColor(project.status)} shadow-sm`}>
+                    {project.status}
+                  </span>
+                </div>
               </div>
               <ProgressBar progress={project.progress} />
             </div>
@@ -253,6 +601,9 @@ const ProjectMonitoring = () => {
           </div>
         ))}
       </div>
+
+      {/* Modal */}
+      {isModalOpen && <ProjectForm />}
     </div>
   );
 };
