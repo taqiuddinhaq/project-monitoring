@@ -141,10 +141,10 @@ const ProjectMonitoring = () => {
   // Helper functions untuk UI
   const getStatusColor = (status) => {
     switch(status) {
-      case "On Track": return "bg-gradient-to-r from-green-400 to-green-500 text-white";
-      case "Delayed": return "bg-gradient-to-r from-red-400 to-red-500 text-white";
-      case "Complete": return "bg-gradient-to-r from-blue-400 to-blue-500 text-white";
-      default: return "bg-gradient-to-r from-yellow-400 to-yellow-500 text-white";
+      case "On Track": return "bg-gradient-to-r from-green-400/90 to-green-500/90 text-white";
+      case "Delayed": return "bg-gradient-to-r from-red-400/90 to-red-500/90 text-white";
+      case "Complete": return "bg-gradient-to-r from-blue-400/90 to-blue-500/90 text-white";
+      default: return "bg-gradient-to-r from-yellow-400/90 to-yellow-500/90 text-white";
     }
   };
 
